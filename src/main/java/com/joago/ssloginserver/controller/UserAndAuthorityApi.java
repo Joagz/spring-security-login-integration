@@ -1,6 +1,5 @@
 package com.joago.ssloginserver.controller;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -29,6 +28,11 @@ public class UserAndAuthorityApi {
 
   @Autowired
   private PasswordEncoder encoder;
+
+  @GetMapping
+  public String home() {
+    return "SUCCESSFULLY CONNECTED TO SPRING SECURITY LOGIN TEST";
+  }
 
   @GetMapping("/protected/user")
   public List<User> findAll() {

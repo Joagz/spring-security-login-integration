@@ -1,7 +1,6 @@
 package com.joago.ssloginserver.auth;
 
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -15,10 +14,13 @@ import com.joago.ssloginserver.util.AuthoritiesUtil;
 
 public class EmailPasswordAuthenticationProvider implements AuthenticationProvider {
 
-  @Autowired
   private UserRepository repo;
-  @Autowired
   private PasswordEncoder encoder;
+
+  public EmailPasswordAuthenticationProvider(UserRepository repo, PasswordEncoder encoder) {
+    this.repo = repo;
+    this.encoder = encoder;
+  }
 
   @Override
   public Authentication authenticate(Authentication authentication) throws AuthenticationException {

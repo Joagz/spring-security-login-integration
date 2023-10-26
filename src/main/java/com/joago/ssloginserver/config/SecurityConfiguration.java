@@ -5,14 +5,24 @@ import java.util.Collections;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.Nullable;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
+
+import com.joago.ssloginserver.auth.EmailPasswordAuthenticationProvider;
+import com.joago.ssloginserver.filter.LoginFilter;
+import com.joago.ssloginserver.repo.UserRepository;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -21,18 +31,20 @@ import jakarta.servlet.http.HttpServletRequest;
 public class SecurityConfiguration {
 
   @Bean
-  public SecurityFilterChain configure(HttpSecurity http) throws Exception {
+  AuthenticationManager myAuthenticationManager(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    EmailPasswordAuthenticationProvider provider = new EmailPasswordAuthenticationProvider(userRepository,
+        passwordEncoder);
+    return provider::authenticate;
+  }
 
-    // ! CONFIGURE REQUESTS !
+  @Bean
+  public SecurityFilterChain configure(HttpSecurity http, AuthenticationManager authenticationManager)
+      throws Exception {
 
-    http.authorizeHttpRequests(
-        request -> request
+    http.addFilterAt(new LoginFilter(authenticationManager), UsernamePasswordAuthenticationFilter.class);
 
-            .requestMatchers("/protected/*").permitAll()
-            .anyRequest().permitAll())
-
-        .formLogin(Customizer.withDefaults())
-        .httpBasic(Customizer.withDefaults());
+    http.securityContext(sc -> sc.requireExplicitSave(false));
+    http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS));
 
     // ! CONFIGURE CORS !
     http.csrf(csrf -> csrf.disable());
@@ -56,6 +68,17 @@ public class SecurityConfiguration {
           }
 
         }));
+
+    // ! CONFIGURE REQUESTS !
+    http.authorizeHttpRequests(
+        request -> request
+            .requestMatchers("/").authenticated()
+            .requestMatchers("/protected/*").authenticated()
+            .requestMatchers("/login").permitAll().anyRequest()
+            .permitAll())
+
+        .formLogin(Customizer.withDefaults())
+        .httpBasic(Customizer.withDefaults());
 
     return http.build();
 

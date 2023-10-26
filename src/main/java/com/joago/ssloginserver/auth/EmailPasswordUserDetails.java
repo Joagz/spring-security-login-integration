@@ -6,11 +6,13 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
 
 import com.joago.ssloginserver.model.User;
 import com.joago.ssloginserver.repo.UserRepository;
 import com.joago.ssloginserver.util.AuthoritiesUtil;
 
+@Service
 public class EmailPasswordUserDetails implements UserDetailsService {
 
   @Autowired
