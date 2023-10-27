@@ -1,13 +1,23 @@
 import Head from "next/head";
 import { Inter } from "next/font/google";
-import { deleteCookie } from "cookies-next";
+import { deleteCookie, getCookie } from "cookies-next";
+import { useEffect, useState } from "react";
+import { LoginApi } from "@/db/LoginApi";
+import { User } from "@/interface/User";
 
 export default function Home() {
+  const [user, setUser] = useState<any>();
 
   const logout = () => {
     deleteCookie("userDetails");
     window.location.reload();
   };
+
+  useEffect(() => {
+    const userDetails = JSON.parse(atob(getCookie("userDetails")!));
+
+    setUser(userDetails);
+  }, []);
 
   return (
     <>
@@ -18,9 +28,43 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <h1>You Are Authenticated</h1>
+      <br />
+      {user && (
+        <>
+          <h2>User Info: </h2>
+          <ul>
+            <li>
+              <b>Email:</b> {user?.username}
+            </li>
+            <li>
+              <b>Roles: </b>
+              {user?.roles?.map((a: any) => {
+                return (
+                  <>
+                    <br />
+                    <span style={{ marginLeft: 15 }}>{a.name}</span>
+                  </>
+                );
+              })}
+            </li>
+            <li>
+              <b>Date of Creation: </b>
+              {user?.create_dt.substring(0, 10)}
+            </li>
+          </ul>
+        </>
+      )}
+      <br />
       <form onSubmit={logout}>
         <button>logout</button>
       </form>
+      <br />
+      {user &&
+        user.roles.filter((auth: any) => auth.name == "ADMIN").length > 0 && (
+          <button onClick={() => window.location.replace("/users")}>
+            Ver usuarios
+          </button>
+        )}
     </>
   );
 }

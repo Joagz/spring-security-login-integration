@@ -14,9 +14,9 @@ function Login({}: Props) {
   } = useForm();
   const [error, setError] = useState(false);
 
-  const login = (data: any) => {
+  const login = async (data: any) => {
     console.log("TRYING LOGIN");
-    LoginApi.post(
+    await LoginApi.post(
       "/login",
       {
         username: data.username,
@@ -24,18 +24,27 @@ function Login({}: Props) {
       },
       { withCredentials: true }
     )
-      .then((res) => {
-        setCookie(
-          "userDetails",
-          // ! COULD ENCODE WITH SECRET, LIKE JWT
-          btoa(
-            JSON.stringify({
-              username: data.username,
-              password: data.pwd,
-            })
-          )
-        );
-        window.location.replace("/");
+      .then(() => {
+        LoginApi.get("/profile", {
+          auth: {
+            username: data.username,
+            password: data.pwd,
+          },
+        }).then((res) => {
+          setCookie(
+            "userDetails",
+            // ! COULD ENCODE WITH SECRET, LIKE JWT
+            btoa(
+              JSON.stringify({
+                username: data.username,
+                password: data.pwd,
+                roles: res.data.authorities,
+                create_dt: res.data.create_dt,
+              })
+            )
+          );
+          window.location.replace("/");
+        });
       })
       .catch((err) => {
         setError(true);
@@ -44,25 +53,98 @@ function Login({}: Props) {
   };
 
   return (
-    <form onSubmit={handleSubmit(login)}>
+    <form
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        padding: 20,
+        borderRadius: 10,
+        background: "#8f8",
+        border: "1px solid black",
+      }}
+      onSubmit={handleSubmit(login)}
+    >
+      <h2 style={{ fontSize: 30 }}>Sign In</h2>
+      <br />
+      {error && (
+        <p
+          style={{
+            color: "red",
+            padding: 5,
+            background: "#fff",
+            borderRadius: 10,
+            fontSize: 23,
+            border: "1px solid black",
+          }}
+        >
+          Invalid Password or Username.
+        </p>
+      )}
       <input
+        style={{
+          borderRadius: 10,
+          border: "1px solid black",
+          padding: 5,
+          background: "#fff",
+        }}
         type="text"
         placeholder="Email"
         id="username"
         {...register("username", { required: true })}
       />
+      {errors.username && (
+        <p
+          style={{
+            color: "red",
+            padding: 5,
+            background: "#fff",
+            borderRadius: 10,
+            fontSize: 23,
+            border: "1px solid black",
+          }}
+        >
+          Please use a valid email
+        </p>
+      )}
       <input
+        style={{
+          borderRadius: 10,
+          border: "1px solid black",
+          padding: 5,
+          background: "#fff",
+        }}
         type="password"
         placeholder="Password"
         id="pwd"
         {...register("pwd", { required: true })}
       />
-      {error && <p style={{ color: "red" }}>Invalid Password or Username.</p>}
-      {errors.username && (
-        <p style={{ color: "red" }}>Please use a valid email</p>
+
+      {errors.pwd && (
+        <p
+          style={{
+            color: "red",
+            padding: 5,
+            background: "#fff",
+            borderRadius: 10,
+            fontSize: 23,
+            border: "1px solid black",
+          }}
+        >
+          Password is required
+        </p>
       )}
-      {errors.pwd && <p style={{ color: "red" }}>Password is required</p>}
-      <input type="submit" value={"LOGIN"}/>
+      <input
+        style={{
+          cursor: "pointer",
+          borderRadius: 10,
+          border: "1px solid black",
+          padding: 5,
+          background: "#fff",
+        }}
+        type="submit"
+        value={"LOGIN"}
+      />
     </form>
   );
 }

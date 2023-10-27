@@ -4,11 +4,22 @@ import { NextResponse } from "next/server";
 export function middleware(req: NextRequest, ev: NextFetchEvent) {
   const userDetails = req.cookies.get("userDetails");
 
+  if (
+    userDetails?.value &&
+    req.url.includes("/users") &&
+    JSON.parse(atob(JSON.stringify(userDetails?.value))).roles.filter(
+      (a: any) => a.name == "ADMIN"
+    ).length > 0
+  ) {
+    return NextResponse.next();
+  } else if (userDetails?.value && req.url.includes("/users")) {
+    return NextResponse.redirect(new URL("/", req.url));
+  }
   if (userDetails?.value && req.url.includes("/login")) {
     return NextResponse.redirect(new URL("/", req.url));
-  } else if (userDetails?.value) {
+  } else if (userDetails?.value && !req.url.includes("/login")) {
     return NextResponse.next();
-  } else if (!req.url.includes("/login")) {
+  } else if (!userDetails?.value && !req.url.includes("/login")) {
     return NextResponse.redirect(new URL("/login", req.url));
   } else {
     return NextResponse.next();
@@ -16,5 +27,5 @@ export function middleware(req: NextRequest, ev: NextFetchEvent) {
 }
 
 export const config = {
-  matcher: ["/", "/login"],
+  matcher: ["/", "/login", "/users"],
 };
