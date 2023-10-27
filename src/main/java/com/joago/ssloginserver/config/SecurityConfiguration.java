@@ -70,6 +70,7 @@ public class SecurityConfiguration {
     http.authorizeHttpRequests(
         request -> request
             .requestMatchers("/").authenticated()
+            .requestMatchers("/profile").permitAll()
             .requestMatchers("/protected/*").authenticated()
             .requestMatchers("/login").permitAll().anyRequest()
             .permitAll())
